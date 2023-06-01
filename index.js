@@ -6,6 +6,12 @@ const app = express();
 
 app.use(express.json());
 
+const emotions = {
+    angry: "angry",
+    happy: "happy",
+    neutral: "neutral"
+}
+
 const configuration = new Configuration({
     apiKey: process.env.OPEN_AI_KEY,
 });
@@ -14,38 +20,52 @@ const openai = new OpenAIApi(configuration);
 
 app.post('/classifier', async (req, res) => {
 
-    const {content, role} = req.body;
+    const {content, role, with_more_categories } = req.body;
 
     try{
+
+        const responseModelExample = `
+            {
+                "category": "price",
+                "emotion": "angry",
+                ${with_more_categories ? `"proposed_category": "different_category_as_the_list",` : ""}
+            }
+        `
 
         const response = await openai.createChatCompletion({
             model:"gpt-3.5-turbo",
             messages: [
-                  {"role": "system", "content": `You are a ${role} classifier assistant for hearing aid company who only provides one of the following category name as answer: 
-                  - price: Any question regarding price of our products
-                  - affordability: any question or comment regarding the affordability of our products
-                  - who are you: if someone is unsure with whom they are speaking 
-                  - insurance: any question regarding insurance
-                  - call back: when someone provides a better time to be reached today or in near future
-                  - insurance: any question regarding insurance or insurance acceptance
-                  - cannot hear: anyone who expresses they don't want to get on a call because they cannot hear well enough
-                  - opt-in: replies start or wants to opt back in after opting opt
-                  - opt-out: no longer wants to receive messages from this source
-                  - blacklist: no longer wants to receive any communication.
-                  - unknown: response does not fit into any of the above categories or propose new one to two word category if one does not exist
-                  - no action:.`
+                  {"role": "system", "content": `You are a ${role} classifier assistant for hearing aid company who : 
+                  -	price: Queries or remarks regarding the cost of our products, specifically asking about how much a product or service is.
+                  -	affordability: Inquiries or comments related to the financial feasibility of our products, this includes statements about our products being too expensive or queries about possible discounts or payment plans.
+                  -	who are you: Questions or comments showing unfamiliarity with the company or its representatives, this includes inquiries about the company's purpose, mission, or its team members.
+                  -	insurance: Questions or comments about whether insurance covers our products or services, or if the company accepts insurance as a form of payment.
+                  -	call back: Instances where a customer suggests a better time for the company to contact them, either later in the day or in the foreseeable future.
+                  -	cannot hear: When someone indicates difficulty in communication due to hearing challenges and prefers not to engage in a phone call conversation.
+                  -	opt-in: Explicit requests to start receiving messages or communications after previously opting out or showing interest in subscribing to a newsletter, updates, or promotional messages.
+                  -	opt-out: Statements where the user expresses a desire to stop receiving specific messages from this company or about a particular topic, but doesn't indicate a complete cessation of all communications.
+                  -	blacklist: Expressions of strong displeasure, frustration, or anger, often indicated by harsh language, suggesting that the user wishes to entirely cease all forms of communication, from any source or about any topic.
+                  -	unknown: Responses that do not align with any of the above categories or suggest the need for a new category. These may require human intervention for accurate categorization.
+                  -	no action: For replies that do not necessitate any further action, this can include polite dismissals, neutral comments, or non-committal language
+                  - create lead: replies yes or any intent or enthusiasm to move forward with the process
+                  `
                 },
-                  {"role": "user", "content": `Can you categorize the following text for me by only telling me the category name?:
+                  {"role": "user", "content": `This is the message that our company is sending to the customer: 
+                  Hi,  I wanted to follow up with you. 
+                    Are you still interested in improving your hearing with the virtually invisible hearing aids by hear.com? 
+                    Reply YES so I can secure your participation in our 45-day no-risk trial.
                   `},
-              {"role": "user", "content": content},
-
-              ]
+                  {"role": "user", "content": `Can you categorize the following text for me by only telling me the category?:`},
+                  {"role": "user", "content": content},
+                  {"role": "user", "content": `Categorize emotion as: ${Object.values(emotions).join(", ")}`},
+                  {"role": "user", "content": `Format the output as the following json example (dont forget any json parameter): ${responseModelExample}`},
+              ],
             });
-
-            console.log(response.data.choices);
-
+        
+            console.log(response.data.choices[0].message.content);
         return res.status(200).json({success: true, 
-        category: response.data.choices[0].message.content
+        data: JSON.parse(response.data.choices[0].message.content)
+
     })
     }catch(err){
         console.log(err);
