@@ -1,10 +1,4 @@
-# email_sms_classifier
-
-Actually the company is clasifying SMS using a hardcoded tool. In this case we want to provide a role to ChatGPT and giving some categories description it can responds using those categories and also recognizing if its emotions (if needed)
-
-Possible categories are like the following
-
-```json
+const categories = [
     {name: "price", description: "Queries or remarks regarding the cost of our products, specifically asking about how much a product or service is."},
     {name: "affordability", description: "Inquiries or comments related to the financial feasibility of our products, this includes statements about our products being too expensive or queries about possible discounts or payment plans."},
     {name: "who are you", description: "Questions or comments showing unfamiliarity with the company or its representatives, this includes inquiries about the company's purpose, mission, or its team members."},
@@ -17,23 +11,8 @@ Possible categories are like the following
     {name: "unknown", description: "Responses that do not align with any of the above categories or suggest the need for a new category. These may require human intervention for accurate categorization."},
     {name: "no action", description: "Replies that suggest no further engagement is needed, or which express a lack of interest or intent to proceed without showing strong negative emotions or expressly requesting to stop communications. This includes short, non-committal replies like 'No', 'Not now', 'Maybe later', etc"},
     {name: "create lead", description: "Replies yes or any intent or enthusiasm to move forward with the process"}
-```
+]
 
-# To Test
-
-1. npm i
-2. create .env file with:
-   ```
-        OPEN_AI_KEY=open-ai-key
-   ```
-3. npm run dev
-4. make an POST request using POSTMAN or other tool with the following json payload:
-
-```json
-{
-	"content": "Yes",
-	"role": "SMS",
-	"with_emotion": true
+module.exports = {
+    categories
 }
-```
-
